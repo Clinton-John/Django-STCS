@@ -1,0 +1,66 @@
+all the configurations will be handled in the settings.py file
+in the amazon account, create a s3 bucket
+the s3 bucket servers as a directory to help us hold all of our folders and directories
+to make all the static files available then you need to uncheck all the public access to make it visible and work
+
+after the bucket is successfully created then you can go ahead and create the json policy to make the buckets be readable in public . go the bucket you just created, go to the permissions
+type of policy is s3 bucket policy
+principle - *
+actions - getobjects
+after the bucket is publicly accessible, create an IAMUSER which will be used to generate our public access key
+search IAMUSER then click on user and create user, select password, uncheck the last option
+then select the attach policies directly and check the s3fullaccess, click on next and then create user
+IAM - Identity Access Management user
+click on the user and then create an access key. the access key helps you make an api request between the django application and the amazon s3 bucket via the aws CLI 
+AFTER clicking on the access key then choose the local code and confirm and click next
+COPY the access key to a safe space and the secret access key to another safe place and that is it for the IAM section of the code.
+
+the next thing is ensuring that the aws cli is setup to allow aws run the python manage.py static to automatically connect and move all the media and the static files to aws.
+download the aws cli > AWS command Line Interface
+after this then configure our aws credentials so that if we run the python manage.py static then we can upload our files to the aws cloud 
+in the cmd after checking if aws is installed(aws --version), run the command below step by step
+ 1. aws configure.  it will ask for the aws access key and then after that the secret access key
+ 2. region name.  leave it to default
+ 3. the defualt output format.   leave it to default
+
+after that all the aws is fully setup and configured to handle anything as long as a django app is connected
+now to our django project, activate the virtual environment for the workings to start
+install two packages,  
+1. django-storages -- pip install django-storages provides support for our storage backed
+    in the installed apps add the storages for the installed apps that we just created
+2. boto3  -- pip install boto3     s the Amazon Web Services (AWS) SDK for Python, which allows developers to interact with various AWS services programmatically. When used in Django applications, boto3 can facilitate a range of functionalities, including File Storage and Management, database management, queue management, email sending,lambda functions and much more 
+
+
+SETTINGS.PY  >>>
+add the 1. AWS_ACCESS_KEY_ID = 
+        2. AWS_SECRET_KEY_ACCESS = 
+use the .env file to make sure the passwords are stored safely
+
+set the basics storage configurations for Amazon s3 buckets
+AWS_STORAGE_BUCKET_NAME = 'open-projects' in this variable you will enter your s3 bucket name, copy the bucket name and pass it inside the above 
+AWS_S3_FILE_OVERWRITE = False   # THIS makes aws to be able to handle any new file uploaded with a name that already exists.
+ 
+AWS_S3_REGION_NAME = 'us-east-2'  this is the region name of the s3 bucket
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'  this is the custom domain name of the s3 bucket
+AWS_S3_OBJECT_PARAMETERS = ''
+AWS_DEFAULT_ACL = None
+
+to fully configure your django applications you need to make sure the following are well set to 
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
+
+# setting up storage confugurations for Amazon s3 bucket
+AWS_STORAGE_BUCKET_NAME = 'open-projects'
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME  # this is the custom domain from which the static files and the media will be served from
+AWS_S3_FILE_OVERWRITE = False
+
+in the settings.py file, to make it work then you need to add the following 
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+          ...your_options_here
+        },
+    },
+}
+after adding the above code then you should go to the terminal and run python manage.py collectstatic to allow the created static files to be displayed and created
